@@ -9,18 +9,18 @@
 
 ---
 
-## 2) High-Level Components
+## 2) System Overview
 - **HTTP API (Echo)**  
-  Exposes endpoints for sending SMS and topping up wallet.
+  Endpoints for sending SMS and topping up wallet. API key auth + per-customer rate-limit (Redis).
 - **Outbox + Kafka**  
-  `messages` and `outbox` are written atomically. Outbox relayed to Kafka.
+  Messages and outbox are written atomically in one DB transaction. Outbox is relayed to Kafka.
 - **Workers (Sender)**  
-  Kafka consumers per lane (`sms.normal`, `sms.express`). Dispatch to providers, batch DB updates.
+  Kafka consumers per lane (`sms.normal`, `sms.express`). Dispatch to providers, batch DB updates, idempotent effects.
 - **Wallet & Ledger**  
-  `wallet_accounts` = state, `wallet_ledger` = history.
+  `wallet_accounts` stores current state; `wallet_ledger` stores every financial operation (append-only).
 - **Databases**
-    - **MySQL** = transactional store.
-    - **ClickHouse** = analytics via Debezium CDC.
+  - **MySQL** (authoritative OLTP): `customers`, `wallet_accounts`, `wallet_ledger`, `messages`, `outbox`
+  - **ClickHouse** (analytics): CDC from MySQL via Debezium → Kafka → ClickHouse
 
 ---
 
