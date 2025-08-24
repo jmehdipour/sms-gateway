@@ -1,0 +1,78 @@
+http:
+  addr: ":8080"
+
+mysql:
+  dsn: "smsgw:smsgwpass@tcp(127.0.0.1:3306)/smsgw?parseTime=true&loc=Local&multiStatements=true"
+  max_open_conns: 50
+  max_idle_conns: 25
+  conn_max_lifetime: 30m
+  conn_max_idletime: 10m
+  ping_timeout: 5s
+
+clickhouse:
+  dsn: "clickhouse://default:@localhost:9000/smsgw?dial_timeout=5s&secure=false&compress=true"
+  max_open_conns: 10
+  max_idle_conns: 10
+  conn_max_lifetime: 1h
+  conn_max_idletime: 10m
+  ping_timeout: 3s
+
+redis:
+  addr: "127.0.0.1:6379"
+  password: ""
+  db: 0
+  dial_timeout: 5s
+
+kafka:
+  brokers: [ "localhost:9094" ]
+  group_id: "smsgw-dispatcher"
+  min_bytes: 1024
+  max_bytes: 10485760
+  commit_interval_ms: 200
+
+dispatcher:
+  worker_count: 64
+  batch_size: 300
+  batch_wait: 100ms
+  max_retry_attempts:
+    normal: 2
+    express: 3
+
+rate_limit:
+  rps: 5
+  burst: 10
+
+providers:
+  - name: kavenegar
+    enabled: true
+    base_url: "https://httpbin.org"
+    normal_path: "/post?kind=normal"
+    express_path: "/post?kind=express"
+    timeout_ms: 2500
+    breaker:
+      fail_threshold: 3
+      open_for_ms: 15000
+
+  - name: ghasedak
+    enabled: true
+    base_url: "https://postman-echo.com"
+    normal_path: "/post?kind=normal"
+    express_path: "/post?kind=express"
+    timeout_ms: 2000
+    breaker:
+      fail_threshold: 2
+      open_for_ms: 10000
+
+  - name: smsir
+    enabled: true
+    base_url: "https://httpbin.org"
+    normal_path: "/post?kind=normal"
+    express_path: "/post?kind=express"
+    timeout_ms: 1500
+    breaker:
+      fail_threshold: 3
+      open_for_ms: 8000
+
+pricing:
+  normal: 100
+  express: 200

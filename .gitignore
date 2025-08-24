@@ -1,0 +1,68 @@
+# Binaries
+/bin/
+/*.exe
+/*.exe~
+/*.dll
+/*.so
+/*.dylib
+/*.test
+
+# Go build cache
+*.out
+*.test
+*.prof
+
+# Go workspace files
+go.work
+go.work.sum
+
+# IDE / Editor
+.idea/
+.vscode/
+*.swp
+*~
+*.iml
+
+# Logs
+*.log
+*.tmp
+*.cache
+*.pid
+
+# Configs (local only)
+config.local.yaml
+config.override.yaml
+*.env
+
+# Docker / Compose
+docker-compose.override.yml
+docker-compose.override.yaml
+
+# Coverage
+coverage.out
+coverage.html
+
+# Vendor (if not used)
+vendor/
+
+# OS junk
+.DS_Store
+Thumbs.db
+
+# ClickHouse / MySQL dumps
+*.sql
+*.sql.gz
+*.dump
+*.bak
+
+# Redis RDB / AOF
+*.rdb
+*.aof
+
+# Kafka data
+kafka-data/
+zookeeper-data/
+
+# Generated docs
+/docs/architecture.png
+/docs/architecture.svg
