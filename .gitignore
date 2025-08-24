@@ -50,7 +50,6 @@ vendor/
 Thumbs.db
 
 # ClickHouse / MySQL dumps
-*.sql
 *.sql.gz
 *.dump
 *.bak
