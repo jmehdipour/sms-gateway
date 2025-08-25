@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"net/http"
 	"os"
 	"os/signal"
 	"strings"
@@ -18,7 +19,10 @@ import (
 	"github.com/jmehdipour/sms-gateway/internal/model"
 	"github.com/jmehdipour/sms-gateway/internal/repository"
 	"github.com/jmehdipour/sms-gateway/internal/worker"
+	"github.com/labstack/echo/v4"
+	echoMid "github.com/labstack/echo/v4/middleware"
 	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/spf13/cobra"
 )
 
@@ -55,8 +59,6 @@ func runSender(cmd *cobra.Command, smsType model.SMSType) error {
 	if err != nil {
 		return fmt.Errorf("load config: %w", err)
 	}
-
-	metrics.MustRegister(prometheus.DefaultRegisterer)
 
 	// sanity on pricing
 	if cfg.Pricing.Normal <= 0 || cfg.Pricing.Express <= 0 {
@@ -152,8 +154,36 @@ func runSender(cmd *cobra.Command, smsType model.SMSType) error {
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
 
+	RunMetricsServer(ctx, ":9090")
+
 	log.Printf(">> sender started type=%s topic=%s group=%s workers=%d batchSize=%d batchWait=%s",
 		smsType, topic, groupID, w.Workers, w.BatchSize, w.BatchWait)
 
 	return w.Run(ctx)
+}
+
+// RunMetricsServer starts an Echo server for /metrics and shuts down when ctx is done.
+func RunMetricsServer(ctx context.Context, addr string) {
+	metrics.MustRegister(prometheus.DefaultRegisterer)
+
+	e := echo.New()
+	e.HideBanner = true
+	e.Use(echoMid.Recover())
+	e.GET("/metrics", echo.WrapHandler(promhttp.Handler()))
+
+	// start
+	go func() {
+		log.Printf("[metrics] serving at %s/metrics", addr)
+		if err := e.Start(addr); err != nil && err != http.ErrServerClosed {
+			log.Printf("[metrics] server error: %v", err)
+		}
+	}()
+
+	// graceful shutdown on ctx cancel
+	go func() {
+		<-ctx.Done()
+		shutCtx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+		defer cancel()
+		_ = e.Shutdown(shutCtx)
+	}()
 }
