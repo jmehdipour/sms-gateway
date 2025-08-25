@@ -14,9 +14,11 @@ import (
 	"github.com/jmehdipour/sms-gateway/internal/db"
 	"github.com/jmehdipour/sms-gateway/internal/dispatcher"
 	"github.com/jmehdipour/sms-gateway/internal/kafka"
+	"github.com/jmehdipour/sms-gateway/internal/metrics"
 	"github.com/jmehdipour/sms-gateway/internal/model"
 	"github.com/jmehdipour/sms-gateway/internal/repository"
 	"github.com/jmehdipour/sms-gateway/internal/worker"
+	"github.com/prometheus/client_golang/prometheus"
 	"github.com/spf13/cobra"
 )
 
@@ -53,6 +55,8 @@ func runSender(cmd *cobra.Command, smsType model.SMSType) error {
 	if err != nil {
 		return fmt.Errorf("load config: %w", err)
 	}
+
+	metrics.MustRegister(prometheus.DefaultRegisterer)
 
 	// sanity on pricing
 	if cfg.Pricing.Normal <= 0 || cfg.Pricing.Express <= 0 {

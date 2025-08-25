@@ -8,6 +8,7 @@ import (
 	"unicode/utf8"
 
 	"github.com/jmehdipour/sms-gateway/internal/http/middleware"
+	"github.com/jmehdipour/sms-gateway/internal/metrics"
 	"github.com/jmehdipour/sms-gateway/internal/model"
 	"github.com/jmehdipour/sms-gateway/internal/service/queue"
 	"github.com/jmehdipour/sms-gateway/internal/util"
@@ -72,6 +73,8 @@ func sendSMSHandler(queueSvc *queue.Service) echo.HandlerFunc {
 
 			return c.JSON(http.StatusInternalServerError, map[string]string{"error": "db error"})
 		}
+
+		metrics.MessagesTotal.WithLabelValues("enqueued", typ.String()).Inc()
 
 		return c.JSON(http.StatusAccepted, map[string]any{
 			"enqueued":    true,

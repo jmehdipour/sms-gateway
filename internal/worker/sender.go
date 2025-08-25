@@ -9,6 +9,7 @@ import (
 
 	"github.com/jmehdipour/sms-gateway/internal/dispatcher"
 	"github.com/jmehdipour/sms-gateway/internal/kafka"
+	"github.com/jmehdipour/sms-gateway/internal/metrics"
 	"github.com/jmehdipour/sms-gateway/internal/model"
 	"github.com/jmehdipour/sms-gateway/internal/repository"
 	"github.com/jmoiron/sqlx"
@@ -182,8 +183,10 @@ func (w *SenderKafka) processOne(ctx context.Context, m kafka.Message, out chan<
 	}
 
 	if derr == nil {
+		metrics.MessagesTotal.WithLabelValues("sent", env.SMS.Type.String()).Inc()
 		out <- updateItem{id: env.ID, customerID: env.UserID, amount: price, status: model.StatusSent}
 	} else {
+		metrics.MessagesTotal.WithLabelValues("failed", env.SMS.Type.String()).Inc()
 		out <- updateItem{id: env.ID, customerID: env.UserID, amount: price, status: model.StatusFailed}
 	}
 
