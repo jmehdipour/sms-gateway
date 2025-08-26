@@ -2,6 +2,8 @@ package repository
 
 import (
 	"context"
+	"database/sql"
+	"errors"
 	"fmt"
 	"strings"
 
@@ -35,7 +37,7 @@ func (r *ledgerRepo) ExistsByIdem(ctx context.Context, tx *sqlx.Tx, idem string)
 
 	if err != nil {
 		// no rows means false
-		if err.Error() == "sql: no rows in result set" {
+		if errors.Is(err, sql.ErrNoRows) {
 			return false, nil
 		}
 		return false, err
